@@ -1,5 +1,5 @@
 import streamlit as st
-from ingestion import ingest_uploaded_files
+from ingest import ingest_uploaded_files
 from rag import ask_rag
 
 st.set_page_config(
@@ -37,7 +37,7 @@ with st.sidebar:
 
     if index_btn:
         if uploaded_files:
-            with st.spinner("Reading, chunking, and embedding PDFs..."):
+            with st.spinner("Reading, chunking, and indexing PDFs..."):
                 try:
                     total_chunks = ingest_uploaded_files(uploaded_files)
                     st.session_state.docs_indexed = True
