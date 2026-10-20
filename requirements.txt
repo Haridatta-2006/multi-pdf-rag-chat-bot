@@ -6,3 +6,4 @@ google-genai
 pinecone
 pypdf
 sentence-transformers
+torch
