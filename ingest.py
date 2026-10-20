@@ -1,5 +1,6 @@
 import os
 from io import BytesIO
+import streamlit as st
 from dotenv import load_dotenv
 from pypdf import PdfReader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -8,26 +9,33 @@ from pinecone import Pinecone
 
 load_dotenv()
 
+def get_secret(key: str, default=None):
+    if hasattr(st, "secrets") and key in st.secrets:
+        return st.secrets[key]
+    return os.getenv(key, default)
+
 def get_pinecone_index():
-    api_key = os.getenv("PINECONE_API_KEY")
-    index_name = os.getenv("PINECONE_INDEX_NAME", "multi-pdf-rag")
+    api_key = get_secret("PINECONE_API_KEY")
+    index_name = get_secret("PINECONE_INDEX_NAME", "multi-pdf-rag")
+
     if not api_key:
-        raise ValueError("PINECONE_API_KEY is not set in environment variables.")
+        raise ValueError("PINECONE_API_KEY is not set in environment variables or Streamlit Secrets.")
+
     pc = Pinecone(api_key=api_key)
     return pc.Index(index_name)
 
 def ingest_uploaded_files(uploaded_files) -> int:
-    """Reads PDF files from Streamlit uploader, chunks them, and stores embeddings in Pinecone."""
+    """Reads PDF files from Streamlit, chunks them, and upserts embeddings into Pinecone."""
     if not uploaded_files:
         return 0
 
     all_texts = []
-    
-    # 1. Extract text from each uploaded PDF
+
+    # 1. Extract text from uploaded PDF objects
     for uploaded_file in uploaded_files:
         pdf_reader = PdfReader(BytesIO(uploaded_file.read()))
         file_name = uploaded_file.name
-        
+
         for page_idx, page in enumerate(pdf_reader.pages):
             text = page.extract_text() or ""
             if text.strip():
@@ -44,7 +52,7 @@ def ingest_uploaded_files(uploaded_files) -> int:
         chunk_size=500,
         chunk_overlap=50
     )
-    
+
     chunks = []
     for doc in all_texts:
         sub_chunks = text_splitter.split_text(doc["text"])
@@ -54,11 +62,11 @@ def ingest_uploaded_files(uploaded_files) -> int:
                 "metadata": doc["metadata"]
             })
 
-    # 3. Create HuggingFace embeddings
+    # 3. Create Hugging Face embeddings
     embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
     index = get_pinecone_index()
 
-    # 4. Upsert chunks in batches
+    # 4. Upsert vectors in batches
     batch_size = 50
     for i in range(0, len(chunks), batch_size):
         batch = chunks[i:i + batch_size]
