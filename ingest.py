@@ -40,7 +40,7 @@ def ingest_pdfs():
 
     # Connect to Pinecone using the official client
     print("Connecting to Pinecone...")
-    pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
+    pc = Pinecone(api_key=os.getenv("pcsk_96rdh_MsaskQmqAUkaweftdxPdbuDK64THsko8QwDM1w3pQbKQc76ZoMQkWR97F5TxoVM"))
     index = pc.Index("multi-pdf-rag")
 
     print("Generating embeddings and uploading to Pinecone...")
