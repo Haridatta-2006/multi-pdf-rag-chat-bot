@@ -1,4 +1,5 @@
 import os
+import streamlit as st
 from dotenv import load_dotenv
 from langchain_huggingface import HuggingFaceEmbeddings
 from pinecone import Pinecone
@@ -6,10 +7,15 @@ from google import genai
 
 load_dotenv()
 
+def get_secret(key: str, default=None):
+    if hasattr(st, "secrets") and key in st.secrets:
+        return st.secrets[key]
+    return os.getenv(key, default)
+
 def ask_rag(query: str):
-    pinecone_key = os.getenv("PINECONE_API_KEY")
-    gemini_key = os.getenv("GEMINI_API_KEY")
-    index_name = os.getenv("PINECONE_INDEX_NAME", "multi-pdf-rag")
+    pinecone_key = get_secret("PINECONE_API_KEY")
+    gemini_key = get_secret("GEMINI_API_KEY")
+    index_name = get_secret("PINECONE_INDEX_NAME", "multi-pdf-rag")
 
     if not pinecone_key:
         raise ValueError("PINECONE_API_KEY is not set.")
@@ -30,7 +36,7 @@ def ask_rag(query: str):
         include_metadata=True
     )
 
-    # 3. Extract retrieved context & sources
+    # 3. Extract text chunks & sources
     context_chunks = []
     sources = set()
 
