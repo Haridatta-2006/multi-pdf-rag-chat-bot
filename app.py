@@ -8,7 +8,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# 1. Initialize session state variables
+# Initialize session state variables
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "docs_indexed" not in st.session_state:
@@ -16,7 +16,7 @@ if "docs_indexed" not in st.session_state:
 if "indexed_file_names" not in st.session_state:
     st.session_state.indexed_file_names = []
 
-# 2. Sidebar: File Upload & Processing
+# Sidebar: File Upload & Processing
 with st.sidebar:
     st.header("📄 Document Upload")
     uploaded_files = st.file_uploader(
@@ -24,7 +24,7 @@ with st.sidebar:
         type=["pdf"],
         accept_multiple_files=True
     )
-    
+
     col1, col2 = st.columns([1, 1])
     with col1:
         index_btn = st.button("Index Documents", type="primary", use_container_width=True)
@@ -49,9 +49,9 @@ with st.sidebar:
             st.warning("Please choose at least one PDF file first.")
 
     if st.session_state.docs_indexed:
-        st.info(f"Active documents:\n" + "\n".join([f"- {name}" for name in st.session_state.indexed_file_names]))
+        st.info("Active documents:\n" + "\n".join([f"- {name}" for name in st.session_state.indexed_file_names]))
 
-# 3. Main Chat Interface
+# Main Chat Interface
 st.title("📚 Multi-PDF RAG Chatbot")
 st.caption("Ask questions about your uploaded documents.")
 
@@ -62,7 +62,7 @@ for message in st.session_state.messages:
 
 # User prompt input
 if prompt := st.chat_input("Ask a question about your PDFs..."):
-    # Render user prompt
+    # Append user prompt
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
@@ -72,4 +72,17 @@ if prompt := st.chat_input("Ask a question about your PDFs..."):
         if not st.session_state.docs_indexed:
             warning_msg = "Please upload and click **Index Documents** before asking questions."
             st.warning(warning_msg)
-            st.session_state.messages.append({"
+            st.session_state.messages.append({"role": "assistant", "content": warning_msg})
+        else:
+            with st.spinner("Searching documents & generating answer..."):
+                try:
+                    answer, sources = ask_rag(prompt)
+                    response_content = answer
+                    if sources:
+                        sources_str = ", ".join(sources)
+                        response_content += f"\n\n---\n**Sources cited:** `{sources_str}`"
+
+                    st.markdown(response_content)
+                    st.session_state.messages.append({"role": "assistant", "content": response_content})
+                except Exception as e:
+                    st.error(f"An error occurred: {str(e)}")
