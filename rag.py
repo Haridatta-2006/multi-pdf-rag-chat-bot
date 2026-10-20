@@ -15,7 +15,7 @@ def ask_rag(query: str):
     query_vector = embeddings.embed_query(query)
     
     # 3. Connect to Pinecone and search for similar chunks
-    pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
+    pc = Pinecone(api_key=os.getenv("pcsk_96rdh_MsaskQmqAUkaweftdxPdbuDK64THsko8QwDM1w3pQbKQc76ZoMQkWR97F5TxoVM"))
     index = pc.Index("multi-pdf-rag")
     
     search_results = index.query(
@@ -53,7 +53,7 @@ def ask_rag(query: str):
     """
     
     # 6. Generate response using gemini-3.6-flash
-    client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+    client = genai.Client(api_key=os.getenv("AIzaSyDndykZcmabkNVag5mlTdd4dQIa2ePVPuc"))
     response = client.models.generate_content(
         model="gemini-3.6-flash",
         contents=prompt
